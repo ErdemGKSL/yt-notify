@@ -67,7 +67,6 @@ class YTNotifyClient {
     }
   }
 
-
 };
 
 module.exports = YTNotifyClient;
