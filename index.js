@@ -1,6 +1,6 @@
 let Parser = require('rss-parser');
 let parser = new Parser();
-
+/** @typedef {{ get: (string) => Promise<string[]> | string[], set: (string, string[]) => any }} Store  */
 class YTNotifyClient {
   checkInterval = 1000 * 60;
   itemLimit = 10;
@@ -8,7 +8,7 @@ class YTNotifyClient {
   #intervals = new Set();
   #urlSet = new Set();
   #listeners = new Set();
-  /** @type {{ get: (string) => Promise<string[]> | string[], set: (string, string[]) => any }} */
+  /** @type {Store} */
   #store = new Map();
   /**
    * @param {Object} param0 
@@ -38,7 +38,7 @@ class YTNotifyClient {
       let videoIds = await this.#store.get(youtubeURL);
       if (!videoIds) videoIds = [];
       let notPostedVideos = data.filter(video => !videoIds.includes(video.id));
-      if (this.#store.get(youtubeURL)?.length > 1 || !primaryFill) notPostedVideos.forEach(video => {
+      if (videoIds.length > 1 || !primaryFill) notPostedVideos.forEach(video => {
         this.#listeners.forEach(listener => listener(video, youtubeURL));
       });
       await this.#store.set(youtubeURL, data.map(x => x.id));
