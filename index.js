@@ -14,12 +14,15 @@ class YTNotifyClient {
    * @param {Object} param0 
    * @param {Number} param0.checkInterval
    * @param {Number} param0.itemLimit
+   * @param {Boolean} param0.primaryFill
    * @param {{ get: (string) => Promise<string[]> | string[], set: (string, string[]) => any }} param0.store
    */
-  constructor({ checkInterval, itemLimit, store, primaryFill = true } = {}) {
+  constructor({ checkInterval, itemLimit, store, primaryFill = true, youtubeURLs = [] } = {}) {
     this.checkInterval = checkInterval ?? this.checkInterval;
     this.itemLimit = itemLimit ?? this.itemLimit;
     this.#store = store ?? this.#store;
+    this.primaryFill = primaryFill ?? this.primaryFill;
+    youtubeURLs.forEach(url => this.subscribe(url));
   }
 
   /**
@@ -30,19 +33,23 @@ class YTNotifyClient {
   subscribe(youtubeURL) {
     if (this.#urlSet.has(youtubeURL)) return;
     this.#urlSet.add(youtubeURL);
-    this.#lastId++;
-    const interval = setInterval(async () => {
+    const f= async () => {
       /** @type {Array<{title: String,link: String,pubDate:String,author: "Cri", id: String,isoDate: String}>} */
       let data = await parser.parseURL(youtubeURL).then((x) => x?.items?.slice(0, this.itemLimit)).catch(() => { });
       if (!data) return;
       let videoIds = await this.#store.get(youtubeURL);
+
       if (!videoIds) videoIds = [];
       let notPostedVideos = data.filter(video => !videoIds.includes(video.id));
-      if (videoIds.length > 1 || !primaryFill) notPostedVideos.forEach(video => {
+      // console.log(notPostedVideos)
+      if (videoIds.length > 1 || !this.primaryFill) notPostedVideos.forEach(video => {
+        console.log(2)
         this.#listeners.forEach(listener => listener(video, youtubeURL));
       });
       await this.#store.set(youtubeURL, data.map(x => x.id));
-    }, this.checkInterval);
+    };
+    f();
+    const interval = setInterval(f, this.checkInterval);
 
     this.#intervals.add(interval);
 
