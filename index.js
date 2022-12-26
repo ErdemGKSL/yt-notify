@@ -14,14 +14,14 @@ class YTNotifyClient {
    * @param {Object} param0 
    * @param {Number} param0.checkInterval
    * @param {Number} param0.itemLimit
-   * @param {Boolean} param0.primaryFill
+   * @param {Boolean} param0.preFill
    * @param {{ get: (string) => Promise<string[]> | string[], set: (string, string[]) => any }} param0.store
    */
-  constructor({ checkInterval, itemLimit, store, primaryFill = true, youtubeURLs = [] } = {}) {
+  constructor({ checkInterval, itemLimit, store, preFill = true, youtubeURLs = [] } = {}) {
     this.checkInterval = checkInterval ?? this.checkInterval;
     this.itemLimit = itemLimit ?? this.itemLimit;
     this.#store = store ?? this.#store;
-    this.primaryFill = primaryFill ?? this.primaryFill;
+    this.preFill = preFill ?? this.preFill;
     youtubeURLs.forEach(url => this.subscribe(url));
   }
 
@@ -42,13 +42,13 @@ class YTNotifyClient {
       if (!videoIds) videoIds = [];
       let notPostedVideos = data.filter(video => !videoIds.includes(video.id));
       // console.log(notPostedVideos)
-      if (videoIds.length > 1 || !this.primaryFill) notPostedVideos.forEach(video => {
-        console.log(2)
+      if (videoIds.length > 1 || !this.preFill) notPostedVideos.forEach(video => {
         this.#listeners.forEach(listener => listener(video, youtubeURL));
       });
       await this.#store.set(youtubeURL, data.map(x => x.id));
     };
     f();
+    console.log(this.#store)
     const interval = setInterval(f, this.checkInterval);
 
     this.#intervals.add(interval);
@@ -57,7 +57,6 @@ class YTNotifyClient {
       this.#urlSet.delete(youtubeURL);
       clearInterval(interval);
       this.#intervals.delete(interval);
-
     }
   };
 
