@@ -8,7 +8,7 @@ const YTNotifyClient = require("yt-notify");
 const client = new YTNotifyClient({
   checkInterval: 1000 * 30,
   itemLimit: 10,
-  primaryFill: false
+  preFill: false
 });
 const untrigger = client.on("video", (video, url) => {
   console.log({ video, url });
